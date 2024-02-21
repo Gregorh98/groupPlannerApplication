@@ -22,7 +22,7 @@ def getConn():
 def getUserId(name, groupCode):
     with getConn() as conn:
         with conn.cursor() as cursor:
-            sql = "select id from users.users where name = %s and group_code = %s"
+            sql = "select id from group_planner.users where name = %s and group_code = %s"
             data = (name, groupCode,)
 
             cursor.execute(sql, data)
@@ -33,7 +33,7 @@ def getUserId(name, groupCode):
 def addUser(name, groupCode):
     with getConn() as conn:
         with conn.cursor() as cursor:
-            sql = "insert into users.users (name, group_code) values (%s, %s)"
+            sql = "insert into group_planner.users (name, group_code) values (%s, %s)"
             data = (name, groupCode,)
 
             cursor.execute(sql, data)
@@ -43,7 +43,7 @@ def addUser(name, groupCode):
 def getGroupMemberNames(groupCode, name):
     with getConn() as conn:
         with conn.cursor() as cursor:
-            sql = "select name from users.users where group_code = %s and name != %s"
+            sql = "select name from group_planner.users where group_code = %s and name != %s"
             data = (groupCode, name,)
 
             cursor.execute(sql, data)
@@ -54,7 +54,7 @@ def getGroupMemberNames(groupCode, name):
 def getUsersFreeOnDay(date, groupCode):
     with getConn() as conn:
         with conn.cursor() as cursor:
-            sql = "SELECT name FROM users.users WHERE id IN (SELECT user_id FROM entries.entries WHERE date = %s) and group_code = %s;"
+            sql = "SELECT name FROM group_planner.users WHERE id IN (SELECT user_id FROM group_planner.entries WHERE date = %s) and group_code = %s;"
             data = (date, groupCode,)
 
             cursor.execute(sql, data)
@@ -66,7 +66,7 @@ def getUsersFreeOnDay(date, groupCode):
 def getTopDays(groupCode):
     with getConn() as conn:
         with conn.cursor() as cursor:
-            sql = "SELECT date, COUNT(date) as popularity FROM entries.entries INNER JOIN users.users ON entries.entries.user_id = users.users.id WHERE group_code = %s GROUP BY group_code, date ORDER BY popularity DESC LIMIT 5;"
+            sql = "SELECT date, COUNT(date) as popularity FROM group_planner.entries INNER JOIN group_planner.users ON group_planner.entries.user_id = group_planner.users.id WHERE group_code = %s GROUP BY group_code, date ORDER BY popularity DESC LIMIT 5;"
             data = (groupCode,)
 
             cursor.execute(sql, data)
@@ -80,7 +80,7 @@ def addDates(dates, userid):
             print(dates)
             for d in dates:
                 dateInQuestion = dp.isoparse(d).date()
-                sql = "INSERT INTO entries.entries (user_id, date, available) SELECT %s, %s, %s WHERE NOT EXISTS (SELECT 1 FROM entries.entries WHERE user_id = %s AND date = %s);"
+                sql = "INSERT INTO group_planner.entries (user_id, date, available) SELECT %s, %s, %s WHERE NOT EXISTS (SELECT 1 FROM group_planner.entries WHERE user_id = %s AND date = %s);"
                 data = (userid, dateInQuestion, True, userid, dateInQuestion)
 
                 cursor.execute(sql, data)
@@ -92,7 +92,7 @@ def getDatesForUser(userId):
     with getConn() as conn:
         with conn.cursor() as cursor:
             # TODO: Stop this being generic and applying over all groups
-            sql = "select date from entries.entries where user_id = %s"
+            sql = "select date from group_planner.entries where user_id = %s"
             data = (userId,)
 
             cursor.execute(sql, data)
@@ -103,7 +103,7 @@ def getDatesForUser(userId):
 def getGroupUserCount(groupCode):
     with getConn() as conn:
         with conn.cursor() as cursor:
-            sql = "select count(id) as memberCount from users.users where group_code = %s"
+            sql = "select count(id) as memberCount from group_planner.users where group_code = %s"
             data = (groupCode,)
 
             cursor.execute(sql, data)
@@ -116,7 +116,7 @@ def removeDates(dates, userid):
         with conn.cursor() as cursor:
             for d in dates:
                 dateInQuestion = dp.isoparse(d).date()
-                sql = "DELETE FROM entries.entries WHERE user_id = %s AND date = %s;"
+                sql = "DELETE FROM group_planner.entries WHERE user_id = %s AND date = %s;"
                 data = (userid, dateInQuestion)
 
                 cursor.execute(sql, data)
@@ -126,7 +126,7 @@ def removeDates(dates, userid):
 def changeScreenName(userId, newName):
     with getConn() as conn:
         with conn.cursor() as cursor:
-            sql = "UPDATE users.users SET name = %s WHERE id = %s;"
+            sql = "UPDATE group_planner.users SET name = %s WHERE id = %s;"
             data = (newName.upper(), userId)
 
             cursor.execute(sql, data)
@@ -136,11 +136,11 @@ def changeScreenName(userId, newName):
 def removeUser(userId, groupCode):
     with getConn() as conn:
         with conn.cursor() as cursor:
-            sql = "DELETE FROM entries.entries WHERE user_id = %s"
+            sql = "DELETE FROM group_planner.entries WHERE user_id = %s"
             data = (userId,)
             cursor.execute(sql, data)
 
-            sql = "DELETE FROM users.users WHERE id = %s"
+            sql = "DELETE FROM group_planner.users WHERE id = %s"
             data = (userId,)
             cursor.execute(sql, data)
 
